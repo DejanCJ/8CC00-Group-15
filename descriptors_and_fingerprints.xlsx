@@ -1,1 +1,36 @@
-BCUT2D_LOGPHI,EState_VSA6,PEOE_VSA3,VSA_EState8,SlogP_VSA3,SMR_VSA9,SMR_VSA1,SMR_VSA3,PEOE_VSA10,BCUT2D_MWHI,FractionCSP3,PEOE_VSA7,fr_Ar_N,VSA_EState5,PEOE_VSA8,SMR_VSA10,BCUT2D_MRLOW,HallKierAlpha,PEOE_VSA11,MaxEStateIndex,qed,VSA_EState2,SlogP_VSA10,BCUT2D_LOGPLOW,MinAbsEStateIndex,Ipc,SlogP_VSA5,SlogP_VSA1
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
+from sklearn.svm import SVC
+from sklearn.linear_model import LogisticRegression
+from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import Pipeline
+from sklearn.metrics import accuracy_score, confusion_matrix, f1_score, precision_score
+import matplotlib.pyplot as plt
+from rdkit import Chem
+from rdkit.Chem import AllChem
+import numpy as np
+
+# Load your data
+
+y_pkm2 = result_df_filtered['PKM2_inhibition']
+y_erk2 = result_df_filtered['ERK2_inhibition']
+X = result_df_filtered.drop(columns=['SMILES', 'PKM2_inhibition', 'ERK2_inhibition'])
+
+# Generate molecular fingerprints
+def generate_fingerprints(smiles_list):
+    fingerprints = []
+    for smiles in smiles_list:
+        mol = Chem.MolFromSmiles(smiles)
+        if mol is not None:
+            fp = AllChem.GetMorganFingerprintAsBitVect(mol, radius=2, nBits=2048)
+            fingerprints.append(fp)
+        else:
+            fingerprints.append(np.zeros(2048))
+    return np.array(fingerprints)
+
+# Add fingerprints to the dataset
+fingerprints = generate_fingerprints(result_df_filtered['SMILES'])
+fingerprint_df = pd.DataFrame(fingerprints, columns=[f'FP_{i}' for i in range(fingerprints.shape[1])])
+X_combined_finger = pd.concat([X, fingerprint_df], axis=1)
