@@ -1,5 +1,3 @@
-Certainly! Here’s the updated explanation for your GitHub README:
-
 ---
 
 ## Project Overview
